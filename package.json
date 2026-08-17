@@ -1,0 +1,24 @@
+{
+  "name": "flowrate-forecasting",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "next": "latest",
+    "plotly.js-dist-min": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-plotly.js": "latest"
+  },
+  "devDependencies": {
+    "@types/plotly.js": "latest",
+    "typescript": "latest"
+  }
+}
