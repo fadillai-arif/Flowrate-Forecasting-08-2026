@@ -1,0 +1,68 @@
+Fix bug pada tab "Forecast Accuracy" agar tidak berhenti ketika tidak ada actual untuk bulan terbaru.
+
+Problem saat ini:
+- Jika forecast dilakukan menggunakan data terakhir Maret, maka target bulan April belum memiliki actual.
+- Sistem sekarang menampilkan pesan "Tidak ada data aktual..." dan tidak menampilkan apapun.
+- Ini tidak diinginkan karena masih ada data historis yang bisa dievaluasi.
+
+Tujuan perbaikan:
+1. Tab Forecast Accuracy tetap menampilkan evaluasi untuk bulan yang sudah memiliki pasangan forecast vs actual.
+2. Tidak gagal hanya karena sebagian bulan belum ada actual.
+
+Perbaikan logic:
+
+A. Ubah filtering data:
+- Saat ini kemungkinan logic = INNER JOIN forecast vs actual (semua harus match)
+- Ubah menjadi:
+  → gunakan LEFT JOIN dari forecast ke actual
+  → hanya hitung akurasi untuk baris yang actual tersedia
+  → baris tanpa actual tetap ditampilkan sebagai "Pending"
+
+B. Logic evaluasi:
+- Loop per target_month:
+  IF actual tersedia:
+     hitung accuracy
+  ELSE:
+     tandai:
+       status = "Waiting actual"
+       accuracy = null
+
+C. Filter display:
+- Untuk tabel ringkasan:
+  tampilkan:
+    - bulan dengan actual → normal (ada accuracy)
+    - bulan tanpa actual → tampil tapi status "Waiting actual"
+- Jangan drop seluruh dataset jika ada missing actual
+
+D. Message UX:
+- Ganti pesan:
+  dari:
+    "Tidak ada data aktual..."
+  menjadi:
+    "Sebagian forecast belum memiliki data aktual. Evaluasi ditampilkan untuk bulan yang sudah tersedia."
+
+E. Chart handling:
+- Untuk chart:
+  gunakan hanya data yang memiliki actual
+- Jangan error jika sebagian null
+
+F. Winner selection:
+- Tentukan winner hanya untuk bulan yang memiliki actual
+- Skip bulan yang belum ada actual
+
+G. Tambahkan indikator UI:
+- Tambahkan kolom:
+    status (Completed / Waiting actual)
+- Warna:
+    Completed = normal
+    Waiting = abu-abu / muted
+
+Acceptance Criteria:
+- [ ] Tab tetap tampil walaupun bulan terbaru belum ada actual
+- [ ] Bulan lama tetap muncul dengan accuracy lengkap
+- [ ] Bulan terbaru muncul dengan status "Waiting actual"
+- [ ] Tidak ada error atau blank state
+- [ ] Chart tetap jalan tanpa crash
+- [ ] Winner tetap dihitung dari bulan valid saja
+
+Start by identifying current join logic, then refactor evaluation function dan UI rendering.

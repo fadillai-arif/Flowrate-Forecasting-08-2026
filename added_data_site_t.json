@@ -1,0 +1,86 @@
+[
+  {
+    "date": "2025-09",
+    "flowrate": 11.02,
+    "water_level": 0.85,
+    "rainfall": 154.89999389648438,
+    "precipitation": 154.89999389648438,
+    "et0": 99.05999755859375
+  },
+  {
+    "date": "2025-10",
+    "flowrate": 10.15,
+    "water_level": 0.88,
+    "rainfall": 178.3000030517578,
+    "precipitation": 178.3000030517578,
+    "et0": 103.37999725341797
+  },
+  {
+    "date": "2025-11",
+    "flowrate": 10.37,
+    "water_level": 0.88,
+    "rainfall": 283.20001220703125,
+    "precipitation": 283.20001220703125,
+    "et0": 89.62999725341797
+  },
+  {
+    "date": "2025-12",
+    "flowrate": 10.49,
+    "water_level": 0.88,
+    "rainfall": 356.70001220703125,
+    "precipitation": 356.70001220703125,
+    "et0": 87.73999786376953
+  },
+  {
+    "date": "2026-01",
+    "flowrate": 13.48,
+    "water_level": 0.8,
+    "rainfall": 301.6000061035156,
+    "precipitation": 301.6000061035156,
+    "et0": 93.75
+  },
+  {
+    "date": "2026-02",
+    "flowrate": 13.78,
+    "water_level": 0.75,
+    "rainfall": 293.79998779296875,
+    "precipitation": 293.79998779296875,
+    "et0": 85.05999755859375
+  },
+  {
+    "date": "2026-03",
+    "flowrate": 14.61,
+    "water_level": 0.8,
+    "rainfall": 237.6999969482422,
+    "precipitation": 237.6999969482422,
+    "et0": 115.6500015258789
+  },
+  {
+    "date": "2026-04",
+    "flowrate": 14.02,
+    "water_level": 0.73,
+    "precipitation": 170.5,
+    "et0": 106.41000366210938
+  },
+  {
+    "date": "2026-05",
+    "flowrate": 14.03,
+    "water_level": 0.73,
+    "precipitation": 162.10000610351562,
+    "et0": 97.37000274658203
+  },
+  {
+    "date": "2026-06",
+    "flowrate": 13.33,
+    "water_level": 0.79,
+    "precipitation": 111.5,
+    "et0": 97.63999938964844
+  },
+  {
+    "date": "2026-07",
+    "flowrate": 14.59,
+    "water_level": 0.77,
+    "precipitation": 48.0,
+    "et0": 105.08000183105469
+  }
+]

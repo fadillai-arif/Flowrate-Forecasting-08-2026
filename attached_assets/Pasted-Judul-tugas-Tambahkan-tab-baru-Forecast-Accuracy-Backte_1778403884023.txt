@@ -1,0 +1,104 @@
+Judul tugas: Tambahkan tab baru “Forecast Accuracy (Backtest Bulanan)” untuk evaluasi akurasi forecast vs aktual (rolling 4 bulan, tampil 3 bulan terakhir), per model & per output (forecast_flowrate / lower_95 / upper_95).
+
+Konteks aplikasi:
+- Aplikasi saya punya menu tab: Data & Analisis, Stationarity Check, Model & Forecast, Input Data Baru, Export.
+- Di tab Model & Forecast saya bisa menjalankan beberapa model (contoh: XGBoost, ARIMA) dan output forecast punya kolom seperti forecast_flowrate, lower_95, upper_95.
+
+1) Tujuan Fitur Baru
+Buat tab tambahan bernama: “Forecast Accuracy” (Evaluasi Akurasi Forecast).
+Tab ini harus:
+1. Membandingkan forecast yang dibuat di bulan sebelumnya (t-1) untuk bulan target t, dengan data aktual bulan t yang baru muncul.
+2. Menghitung akurasi untuk 3 bulan terakhir (contoh: Feb–Mar–Apr 2026) berdasarkan forecast one-step-ahead:
+   - Akurasi Feb = forecast yang dibuat di Jan untuk Feb vs aktual Feb
+   - Akurasi Mar = forecast yang dibuat di Feb untuk Mar vs aktual Mar
+   - Akurasi Apr = forecast yang dibuat di Mar untuk Apr vs aktual Apr
+3. Rolling/backdated window default 4 bulan ke belakang (bisa diubah via slider/select).
+4. Untuk setiap bulan target, tampilkan:
+   - model mana paling akurat
+   - output mana paling akurat (forecast_flowrate vs lower_95 vs upper_95)
+   - nilai prediksi, aktual, error, dan akurasi %
+   - contoh ringkas: “Feb 2026: 98% — XGBoost (upper_95)”
+5. Di akhir tab, berikan rekomendasi model “best current” untuk dipakai di tanggal berjalan, berdasarkan agregat window (rata-rata akurasi tertinggi / MAPE terendah).
+
+2) Requirement Teknis (WAJIB)
+
+A. Persist/Log setiap hasil forecast saat model dijalankan
+Saat user klik “Jalankan Model” (tab Model & Forecast), simpan hasil forecast ke storage persisten (CSV atau SQLite) agar evaluasi membandingkan “forecast dulu” vs “aktual baru”.
+Buat salah satu:
+- data/forecast_history.csv ATAU data/forecast_history.sqlite
+
+Skema minimal (wajib ada):
+- run_timestamp (datetime)
+- origin_month (bulan data terakhir saat forecast dibuat; format YYYY-MM)
+- target_month (bulan yang diprediksi; format YYYY-MM)
+- model_name (e.g., XGBoost, ARIMA)
+- output_type (enum: forecast_flowrate, lower_95, upper_95)
+- yhat (angka forecast)
+- params_json (opsional: test_size, horizon, asumsi cuaca, dsb)
+
+Catatan:
+- Untuk evaluasi bulanan “t vs t-1”, gunakan record dengan origin_month == (target_month - 1 bulan).
+- Jika ada banyak run untuk origin yang sama, pilih run TERAKHIR (timestamp paling baru).
+
+B. Definisi metrik akurasi (jelas & konsisten)
+Hitung minimal:
+- abs_error = abs(actual - yhat)
+- ape = abs_error / max(abs(actual), epsilon)  (epsilon kecil agar tidak divide by zero)
+- accuracy_pct = max(0, 100 * (1 - ape))
+Tambahkan opsional: MAE, RMSE, MAPE rata-rata dalam window.
+
+C. UI Tab “Forecast Accuracy”
+Komponen:
+1) Kontrol:
+- window_back_months (default 4, range 3–12)
+- months_to_display (default 3)
+- metric ranking default accuracy_pct (opsi MAPE/MAE/RMSE)
+- toggle “Include CI outputs (lower_95/upper_95)” default ON
+
+2) Ringkasan per Bulan (WAJIB)
+Tabel kolom:
+- target_month, actual, best_model, best_output_type, best_yhat, abs_error, accuracy_pct
+Urut: bulan terlama → terbaru.
+
+3) Detail per Model/Output (WAJIB)
+Tabel panjang:
+- target_month, model_name, output_type, yhat, actual, abs_error, accuracy_pct
+Highlight baris terbaik per bulan (label “WINNER”).
+
+4) Visual (minimal 2 chart)
+- Chart 1: accuracy_pct per month untuk pemenang (winner)
+- Chart 2: jumlah kemenangan per model dalam window (winner counts)
+
+5) Rekomendasi
+Tampilkan:
+- “Recommended model today: <model> (<output_type>)”
+berdasarkan rata-rata accuracy_pct tertinggi dalam window (atau MAPE terendah jika dipilih).
+
+3) Edge Cases (WAJIB)
+- Jika forecast_history kosong: tampilkan “Belum ada riwayat forecast. Jalankan model dulu.”
+- Jika ada aktual tapi tidak ada forecast origin bulan sebelumnya: tandai “No forecast available”.
+- Normalisasi format tanggal ke YYYY-MM.
+- Pastikan join aktual vs forecast tidak double-count.
+
+4) Integrasi ke Struktur Aplikasi
+Agent harus:
+1. Scan repo: cari file utama UI dan tempat tabs dibuat.
+2. Tambahkan tab baru tanpa merusak tab existing.
+3. Pisahkan logic ke modul:
+   - utils/forecast_history.py (save/load)
+   - utils/forecast_accuracy.py (metrics + winner selection)
+4. Tambahkan test ringan (pytest) untuk:
+   - select_one_step_forecasts()
+   - compute_accuracy_pct()
+   - pick_winner_per_month()
+
+5) Acceptance Criteria (ceklist wajib lulus)
+- [ ] Ada tab baru “Forecast Accuracy”
+- [ ] Setelah saya menjalankan model, forecast tersimpan di forecast_history (persisten)
+- [ ] Tab evaluasi menampilkan 3 bulan terakhir dan window default 4 bulan
+- [ ] Tiap bulan muncul winner: model + output_type (forecast_flowrate/lower_95/upper_95)
+- [ ] Ada tabel ringkasan + tabel detail + minimal 2 chart
+- [ ] Ada rekomendasi “best model today”
+- [ ] Tidak merusak tab lain & app tetap jalan
+
+Mulai dari membuat plan dulu, lalu implement bertahap: storage → evaluasi function → tab UI → chart → polishing.

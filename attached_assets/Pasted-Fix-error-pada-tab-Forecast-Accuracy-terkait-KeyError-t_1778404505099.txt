@@ -1,0 +1,81 @@
+Fix error pada tab "Forecast Accuracy" terkait KeyError: 'target_month'.
+
+Problem:
+- Error terjadi di:
+    winners_display = winners[winners["target_month"].isin(display_months)]
+- DataFrame winners tidak selalu memiliki kolom "target_month"
+- Hal ini bisa terjadi jika:
+  1. winners kosong
+  2. kolom berubah saat filtering/groupby
+  3. hasil pipeline tidak menghasilkan winner (karena missing actual)
+
+Tujuan:
+- Pastikan sistem TIDAK CRASH walaupun data kosong / sebagian missing
+- Pastikan "target_month" selalu tersedia sebelum dipakai
+
+Perbaikan yang harus dilakukan:
+
+A. Safe guard sebelum akses kolom
+Tambahkan check:
+IF "target_month" not in winners.columns:
+    → tampilkan warning:
+      "Belum ada hasil evaluasi yang bisa ditampilkan"
+    → skip filtering/display
+    → jangan error
+
+B. Pastikan kolom tetap ada di pipeline
+Saat membentuk winners dataframe:
+- setelah groupby / selection:
+  return dataframe dengan kolom:
+    target_month
+    model_name
+    output_type
+    accuracy_pct
+
+Jika perlu:
+- gunakan reset_index() setelah groupby
+- pastikan target_month tidak hilang
+
+C. Handle empty dataframe
+IF winners is empty:
+   tampilkan:
+   "Belum ada bulan dengan actual + forecast yang bisa dibandingkan"
+   dan STOP render fungsi lanjutan
+
+D. Defensive code untuk filtering
+Ubah:
+    winners["target_month"].isin(display_months)
+
+jadi:
+    if "target_month" in winners.columns:
+        winners_display = winners[winners["target_month"].isin(display_months)]
+    else:
+        winners_display = empty dataframe
+
+E. Debug helper (WAJIB sementara)
+Tambahkan:
+    st.write("DEBUG winners columns:", winners.columns)
+    st.write("DEBUG winners shape:", winners.shape)
+
+untuk verifikasi hasil pipeline
+
+F. Pastikan konsistensi nama kolom
+Seluruh pipeline WAJIB pakai nama:
+    "target_month"
+Jangan pakai:
+    "date", "month", dll
+
+G. Jangan crash UI
+Semua render tabel/chart harus:
+    if dataframe empty:
+        tampilkan message
+    bukan langsung plotting
+
+Acceptance Criteria:
+- [ ] Tidak ada lagi KeyError
+- [ ] Tab tetap tampil meskipun data kosong / partial
+- [ ] Kolom target_month selalu ada jika ada data
+- [ ] Jika tidak ada data → tampil message, bukan error
+- [ ] Chart tidak crash saat data kosong
+
+Mulai dengan tracing fungsi pembentuk winners dataframe, lalu tambahkan defensive guards.
